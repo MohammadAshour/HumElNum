@@ -1,5 +1,6 @@
-import dbConnect from '@/lib/db';
-import Ingredient from '@/models/Ingredient';
+
+import dbConnect from '../../../lib/db';
+import Ingredient from '../../../models/Ingredient';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
