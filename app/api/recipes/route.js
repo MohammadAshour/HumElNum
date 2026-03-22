@@ -2,22 +2,28 @@ import dbConnect from '../../../lib/db';
 import Recipe from '../../../models/Recipe';
 import { NextResponse } from 'next/server';
 
-// جلب كل الوصفات
+// Get all recipes
 export async function GET() {
-  await dbConnect();
   try {
-    const recipes = await Recipe.find({}).sort({ createdAt: -1 });
+    await dbConnect();
+    const recipes = await Recipe.find({}).sort({ createdAt: -1 }).lean();
     return NextResponse.json({ success: true, data: recipes });
   } catch (error) {
-    return NextResponse.json({ success: false, error: error.message });
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
-// إضافة وصفة جديدة
+// Create a new recipe
 export async function POST(request) {
-  await dbConnect();
   try {
+    await dbConnect();
     const body = await request.json();
+    
+    // Server-side validation check
+    if (!body.title || !body.cookTime) {
+      return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
+    }
+
     const recipe = await Recipe.create(body);
     return NextResponse.json({ success: true, data: recipe }, { status: 201 });
   } catch (error) {
@@ -25,15 +31,15 @@ export async function POST(request) {
   }
 }
 
-// حذف وصفة
+// Delete a recipe
 export async function DELETE(request) {
-  await dbConnect();
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get('id');
   try {
+    await dbConnect();
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
     await Recipe.findByIdAndDelete(id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ success: false, error: error.message });
+    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
   }
 }
