@@ -39,7 +39,7 @@ export default function HomePage() {
       {/* الجزء العلوي: هادي وبسيط */}
       <header style={{ textAlign: 'center', marginTop: '20px', marginBottom: '40px' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#1e293b', marginBottom: '5px' }}>هم النم 🍎</h1>
-        <p style={{ color: '#64748b' }}>أهلاً يا حسن.. تحب تاكل إيه دلوقتي؟</p>
+        <p style={{ color: '#64748b' }}>هناكل إيه دلوقتي؟</p>
       </header>
 
       {/* اختيارات الوجبة: هي دي "نجمة" الصفحة */}
