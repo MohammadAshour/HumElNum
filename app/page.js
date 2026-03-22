@@ -4,8 +4,9 @@ import Link from 'next/link';
 
 export default function HomePage() {
   const [allSuggestions, setAllSuggestions] = useState([]);
-  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
+  const [currentRecipe, setCurrentRecipe] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const getSuggestions = async () => {
@@ -13,35 +14,49 @@ export default function HomePage() {
     try {
       const res = await fetch('/api/suggest');
       const json = await res.json();
-      if (json.success) {
-        setAllSuggestions(json.data);
-      }
+      if (json.success) setAllSuggestions(json.data);
     } catch (err) { console.error(err); }
     setLoading(false);
   };
 
   useEffect(() => { getSuggestions(); }, []);
 
-  const handleTypeSelect = (type) => {
-    setSelectedType(type);
-    // الفلترة بتشوف لو النوع المختار موجود جوه مصفوفة الـ type بتاعة الأكلة
-    const filtered = allSuggestions.filter(recipe => recipe.type.includes(type));
-    setFilteredSuggestions(filtered);
+  // اختيار أكلة عشوائية بناءً على النوع
+  const pickRecipe = (type) => {
+    const filtered = allSuggestions.filter(r => r.type.includes(type));
+    if (filtered.length > 0) {
+      const random = filtered[Math.floor(Math.random() * filtered.length)];
+      setCurrentRecipe(random);
+      setSelectedType(type);
+      setShowDetails(false); // إخفاء التفاصيل عند تغيير الاقتراح
+    } else {
+      setCurrentRecipe(null);
+      setSelectedType(type);
+    }
+  };
+
+  const markAsEaten = async () => {
+    if (!currentRecipe) return;
+    // هنا ممكن مستقبلاً نربط API يقلل المكونات من المخزن
+    alert(`بالهنا والشفا! تم تسجيل إنكم أكلتم ${currentRecipe.title}`);
+    // نسحب اقتراح جديد بعد الأكل
+    pickRecipe(selectedType);
   };
 
   return (
-    <div dir="rtl" style={{ padding: '20px', fontFamily: 'Arial', backgroundColor: '#fff', minHeight: '100vh' }}>
-      <header style={{ textAlign: 'center', margin: '30px 0' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#1e293b' }}>هم النم 🍎</h1>
-        <p style={{ color: '#64748b' }}>تاكلوا إيه النهاردة؟</p>
+    <div dir="rtl" style={{ padding: '20px', fontFamily: 'Arial', backgroundColor: '#fff', minHeight: '100vh', color: '#1e293b' }}>
+      
+      <header style={{ textAlign: 'center', marginTop: '10px', marginBottom: '30px' }}>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: '900', margin: '0' }}>هم النم 🍎</h1>
       </header>
 
-      <section style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '40px' }}>
+      {/* اختيارات الوجبة */}
+      <section style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px' }}>
         {['فطار', 'غداء', 'عشاء'].map((t) => (
-          <button key={t} onClick={() => handleTypeSelect(t)}
+          <button key={t} onClick={() => pickRecipe(t)}
             style={{
               flex: 1, maxWidth: '90px', padding: '15px 5px', borderRadius: '20px', border: '2px solid',
-              transition: '0.3s', cursor: 'pointer', fontWeight: 'bold',
+              cursor: 'pointer', fontWeight: 'bold',
               borderColor: selectedType === t ? '#6366f1' : '#f1f5f9',
               backgroundColor: selectedType === t ? '#6366f1' : '#fff',
               color: selectedType === t ? '#fff' : '#64748b',
@@ -51,28 +66,53 @@ export default function HomePage() {
         ))}
       </section>
 
-      <main style={{ maxWidth: '500px', margin: '0 auto' }}>
-        {selectedType ? (
-          <>
-            <h2 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>مقترحات الـ {selectedType}:</h2>
-            {filteredSuggestions.length > 0 ? (
-              <div style={{ display: 'grid', gap: '15px' }}>
-                {filteredSuggestions.map(recipe => (
-                  <div key={recipe._id} style={{ padding: '20px', borderRadius: '25px', border: '1px solid #f1f5f9', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-                    <h3 style={{ margin: '0' }}>{recipe.title}</h3>
-                    <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>⏱️ {recipe.cookTime} دقيقة | {recipe.difficulty}</div>
-                    <p style={{ marginTop: '10px', fontSize: '0.9rem', color: '#475569' }}><b>الطريقة:</b> {recipe.instructions}</p>
-                  </div>
-                ))}
+      <main style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'center' }}>
+        {currentRecipe ? (
+          <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '30px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', border: '1px solid #f1f5f9' }}>
+            <span style={{ backgroundColor: '#eef2ff', color: '#6366f1', padding: '5px 15px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 'bold' }}>اقتراح الشيف ليك:</span>
+            <h2 style={{ fontSize: '2rem', margin: '15px 0 10px 0' }}>{currentRecipe.title}</h2>
+            
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', color: '#64748b', fontSize: '0.9rem', marginBottom: '25px' }}>
+              <span>⏱️ {currentRecipe.cookTime} دقيقة</span>
+              <span>📊 {currentRecipe.difficulty}</span>
+            </div>
+
+            {showDetails && (
+              <div style={{ textAlign: 'right', backgroundColor: '#f8fafc', padding: '15px', borderRadius: '15px', marginBottom: '20px', fontSize: '0.9rem', lineHeight: '1.6' }}>
+                <p><b>الطريقة:</b> {currentRecipe.instructions}</p>
+                <p><b>المكونات:</b> {currentRecipe.ingredients.join('، ')}</p>
               </div>
-            ) : <p style={{ textAlign: 'center', color: '#cbd5e1' }}>مفيش وصفات {selectedType} كاملة المكونات حالياً.</p>}
-          </>
-        ) : <p style={{ textAlign: 'center', color: '#cbd5e1' }}>اختار نوع الوجبة عشان نشغل المطبخ!</p>}
+            )}
+
+            {/* أزرار التحكم */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <button onClick={() => setShowDetails(!showDetails)} style={{ padding: '15px', backgroundColor: '#6366f1', color: '#fff', border: 'none', borderRadius: '15px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer' }}>
+                {showDetails ? 'إخفاء التفاصيل' : 'يلا بينا (التفاصيل)'}
+              </button>
+              
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button onClick={markAsEaten} style={{ flex: 1, padding: '12px', backgroundColor: '#ecfdf5', color: '#059669', border: '1px solid #10b981', borderRadius: '15px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.85rem' }}>
+                   كلناها قريب ✅
+                </button>
+                <button onClick={() => pickRecipe(selectedType)} style={{ flex: 1, padding: '12px', backgroundColor: '#fef2f2', color: '#dc2626', border: '1px solid #f87171', borderRadius: '15px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.85rem' }}>
+                   شوف غيره 🔄
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : selectedType ? (
+          <p style={{ color: '#94a3b8' }}>مفيش أكلات متاحة حالياً للـ {selectedType}.</p>
+        ) : (
+          <div style={{ marginTop: '50px', color: '#cbd5e1' }}>
+            <p style={{ fontSize: '1.2rem' }}>جاهزين نطبخ؟ 👨‍🍳</p>
+            <p>اختار نوع الوجبة عشان أقولك نأكل إيه</p>
+          </div>
+        )}
       </main>
 
-      <footer style={{ marginTop: '50px', borderTop: '1px solid #f1f5f9', paddingTop: '20px', display: 'flex', justifyContent: 'center', gap: '30px' }}>
-        <Link href="/store" style={{ textDecoration: 'none', color: '#64748b' }}>📦 المخزن</Link>
-        <Link href="/chef" style={{ textDecoration: 'none', color: '#64748b' }}>👨‍🍳 الشيف</Link>
+      <footer style={{ marginTop: '60px', borderTop: '1px solid #f1f5f9', paddingTop: '20px', display: 'flex', justifyContent: 'center', gap: '30px' }}>
+        <Link href="/store" style={{ textDecoration: 'none', color: '#94a3b8', fontSize: '0.8rem' }}>📦 المخزن</Link>
+        <Link href="/chef" style={{ textDecoration: 'none', color: '#94a3b8', fontSize: '0.8rem' }}>👨‍🍳 الشيف</Link>
       </footer>
     </div>
   );
