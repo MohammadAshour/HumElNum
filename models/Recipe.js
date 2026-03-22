@@ -1,16 +1,11 @@
-import mongoose from 'mongoose';
-
+// models/Recipe.js
 const RecipeSchema = new mongoose.Schema({
   title: { type: String, required: true },
-  type: { type: String, enum: ['فطار', 'غداء', 'عشاء'], required: true },
+  // التعديل هنا: مصفوفة بدل نص واحد
+  type: [{ type: String, enum: ['فطار', 'غداء', 'عشاء'] }], 
   cookTime: { type: Number, required: true },
-  difficulty: { type: String, enum: ['سهل', 'وسط', 'صعب'], required: true },
-  
-  // التعديل الجوهري هنا: خليه مصفوفة من النصوص فقط
-  ingredients: [String], 
-  
+  difficulty: { type: String, enum: ['سهل', 'وسط', 'صعب'] },
+  ingredients: [String],
   instructions: { type: String, required: true },
   lastEaten: { type: Date, default: null }
 });
-
-export default mongoose.models.Recipe || mongoose.model('Recipe', RecipeSchema);
