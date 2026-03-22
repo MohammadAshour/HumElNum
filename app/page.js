@@ -9,11 +9,9 @@ export default function InventoryPage() {
     try {
       const res = await fetch('/api/ingredients');
       const json = await res.json();
-      if (json.success) {
-        setIngredients(json.data || []); // التأكد من وجود مصفوفة حتى لو فارغة
-      }
+      if (json.success) setIngredients(json.data || []);
     } catch (err) {
-      console.error("Error fetching:", err);
+      console.error("خطأ في جلب البيانات:", err);
     }
   };
 
@@ -21,6 +19,10 @@ export default function InventoryPage() {
 
   const addItem = async (e) => {
     e.preventDefault();
+    if (!newItem.unit) {
+      alert("من فضلك اختر الوحدة");
+      return;
+    }
     await fetch('/api/ingredients', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -42,43 +44,84 @@ export default function InventoryPage() {
   };
 
   const deleteItem = async (id) => {
-    await fetch(`/api/ingredients?id=${id}`, { method: 'DELETE' });
-    fetchIngredients();
+    if (confirm("هل أنت متأكد من الحذف؟")) {
+      await fetch(`/api/ingredients?id=${id}`, { method: 'DELETE' });
+      fetchIngredients();
+    }
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: '15px', fontFamily: 'Arial, sans-serif' }}>
+    <div dir="rtl" style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: '15px', fontFamily: 'Arial, sans-serif' }}>
       <div style={{ maxWidth: '450px', margin: '0 auto' }}>
         
-        <h1 style={{ textAlign: 'center', color: '#1f2937' }}>Hum El Num 🍎</h1>
+        <header style={{ textAlign: 'center', marginBottom: '20px' }}>
+          <h1 style={{ fontSize: '2rem', color: '#1f2937' }}>مخزن هم النم 🍎</h1>
+          <p style={{ color: '#6b7280' }}>إدارة محتويات الثلاجة بسهولة</p>
+        </header>
 
-        {/* Input Form Card */}
+        {/* كارت الإضافة */}
         <div style={{ backgroundColor: 'white', padding: '15px', borderRadius: '15px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', marginBottom: '20px' }}>
           <form onSubmit={addItem} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <input placeholder="Name" value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }} />
+            <input 
+              placeholder="اسم المكون (مثلاً: بيض)" 
+              value={newItem.name} 
+              onChange={e => setNewItem({...newItem, name: e.target.value})} 
+              required 
+              style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '16px' }} 
+            />
             <div style={{ display: 'flex', gap: '10px' }}>
-              <input placeholder="Qty" type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: e.target.value})} required style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #ddd', minWidth: '0' }} />
-              <input placeholder="Unit" value={newItem.unit} onChange={e => setNewItem({...newItem, unit: e.target.value})} required style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #ddd', minWidth: '0' }} />
+              <input 
+                placeholder="الكمية" 
+                type="number" 
+                value={newItem.quantity} 
+                onChange={e => setNewItem({...newItem, quantity: e.target.value})} 
+                required 
+                style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #ddd', minWidth: '0' }} 
+              />
+              <select 
+                value={newItem.unit} 
+                onChange={e => setNewItem({...newItem, unit: e.target.value})} 
+                required 
+                style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #ddd', backgroundColor: 'white' }}
+              >
+                <option value="" disabled>الوحدة</option>
+                <option value="جرام">جرام</option>
+                <option value="قطعة">قطعة</option>
+                <option value="مللي">مللي</option>
+              </select>
             </div>
-            <button type="submit" style={{ backgroundColor: '#10b981', color: 'white', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold' }}>Add to Fridge</button>
+            <button type="submit" style={{ backgroundColor: '#10b981', color: 'white', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
+              إضافة للمخزن
+            </button>
           </form>
         </div>
 
-        {/* Ingredients List */}
+        {/* قائمة المحتويات */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {ingredients.length > 0 ? ingredients.map((item) => (
             <div key={item._id} style={{ backgroundColor: 'white', padding: '15px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{item.name}</h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px' }}>
-                  <button onClick={() => updateQuantity(item._id, item.quantity, -1)} style={{ width: '30px', height: '30px', borderRadius: '50%', border: '1px solid #ddd' }}>-</button>
-                  <span style={{ fontWeight: 'bold', color: '#059669' }}>{item.quantity} {item.unit}</span>
-                  <button onClick={() => updateQuantity(item._id, item.quantity, 1)} style={{ width: '30px', height: '30px', borderRadius: '50%', border: '1px solid #ddd' }}>+</button>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#111827' }}>{item.name}</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
+                  <button onClick={() => updateQuantity(item._id, item.quantity, -1)} style={{ width: '35px', height: '35px', borderRadius: '50%', border: '1px solid #ddd', backgroundColor: '#f3f4f6', cursor: 'pointer', fontSize: '18px' }}>-</button>
+                  <span style={{ fontWeight: 'bold', color: '#059669', minWidth: '60px', textAlign: 'center' }}>
+                    {item.quantity} {item.unit}
+                  </span>
+                  <button onClick={() => updateQuantity(item._id, item.quantity, 1)} style={{ width: '35px', height: '35px', borderRadius: '50%', border: '1px solid #ddd', backgroundColor: '#f3f4f6', cursor: 'pointer', fontSize: '18px' }}>+</button>
                 </div>
               </div>
-              <button onClick={() => deleteItem(item._id)} style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer' }}>Delete</button>
+              <button 
+                onClick={() => deleteItem(item._id)} 
+                style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                حذف
+              </button>
             </div>
-          )) : <p style={{ textAlign: 'center', color: '#999' }}>Fridge is empty!</p>}
+          )) : (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#9ca3af' }}>
+              <p>الثلاجة فاضية.. ابدأ أضف مكونات!</p>
+            </div>
+          )}
         </div>
 
       </div>
