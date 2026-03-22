@@ -3,9 +3,8 @@ import { useState, useEffect } from 'react';
 
 export default function AdminDashboard() {
   const [recipes, setRecipes] = useState([]);
-  const [allIngredients, setAllIngredients] = useState([]); // Master list from DB
-  const [selectedIngredients, setSelectedIngredients] = useState([]); // Ingredients for current recipe
-  
+  const [allIngredients, setAllIngredients] = useState([]);
+  const [selectedIngredients, setSelectedIngredients] = useState([]);
   const [newRecipe, setNewRecipe] = useState({
     title: '',
     type: 'غداء',
@@ -15,15 +14,17 @@ export default function AdminDashboard() {
   });
 
   const fetchData = async () => {
-    // Fetch Recipes
-    const resRecipes = await fetch('/api/recipes');
-    const jsonRecipes = await resRecipes.json();
-    if (jsonRecipes.success) setRecipes(jsonRecipes.data);
+    try {
+      const resRecipes = await fetch('/api/recipes');
+      const jsonRecipes = await resRecipes.json();
+      if (jsonRecipes.success) setRecipes(jsonRecipes.data);
 
-    // Fetch Master Ingredients
-    const resIng = await fetch('/api/ingredients');
-    const jsonIng = await resIng.json();
-    if (jsonIng.success) setAllIngredients(jsonIng.data);
+      const resIng = await fetch('/api/ingredients');
+      const jsonIng = await resIng.json();
+      if (jsonIng.success) setAllIngredients(jsonIng.data);
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -38,37 +39,50 @@ export default function AdminDashboard() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const recipeData = { ...newRecipe, ingredients: selectedIngredients };
     
-    await fetch('/api/recipes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(recipeData),
-    });
+    const recipeData = { 
+      ...newRecipe, 
+      cookTime: Number(newRecipe.cookTime), // Essential: Convert string to Number
+      ingredients: selectedIngredients 
+    };
+    
+    try {
+      const res = await fetch('/api/recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(recipeData),
+      });
 
-    setNewRecipe({ title: '', type: 'غداء', cookTime: '', difficulty: 'سهل', instructions: '' });
-    setSelectedIngredients([]);
-    fetchData();
+      const result = await res.json();
+      if (result.success) {
+        alert("✅ تم حفظ الوصفة بنجاح!");
+        setNewRecipe({ title: '', type: 'غداء', cookTime: '', difficulty: 'سهل', instructions: '' });
+        setSelectedIngredients([]);
+        fetchData();
+      } else {
+        alert("❌ فشل في الحفظ: " + result.error);
+      }
+    } catch (err) {
+      alert("⚠️ خطأ في الاتصال بالسيرفر: " + err.message);
+    }
   };
 
   const deleteRecipe = async (id) => {
-    if(confirm("حذف الوصفة؟")) {
+    if(confirm("هل أنت متأكد من حذف هذه الوصفة؟")) {
       await fetch(`/api/recipes?id=${id}`, { method: 'DELETE' });
       fetchData();
     }
   };
 
   return (
-    <div dir="rtl" style={{ padding: '20px', fontFamily: 'Arial', backgroundColor: '#f0f2f5', minHeight: '100vh' }}>
-      <h1 style={{ textAlign: 'center', color: '#1e293b' }}>إدارة مطبخ هم النم 👨‍🍳</h1>
+    <div dir="rtl" style={{ padding: '15px', fontFamily: 'Arial', backgroundColor: '#f4f7f6', minHeight: '100vh' }}>
+      <h1 style={{ textAlign: 'center', color: '#2d3748' }}>لوحة التحكم 👨‍🍳</h1>
       
-      <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '15px', maxWidth: '700px', margin: '0 auto 30px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-        <h2 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>إضافة وصفة جديدة</h2>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+      <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', maxWidth: '600px', margin: '0 auto 25px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <input placeholder="اسم الأكلة" value={newRecipe.title} onChange={e => setNewRecipe({...newRecipe, title: e.target.value})} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e0' }} />
           
-          <input placeholder="اسم الأكلة (مثلاً: مكرونة بالبشاميل)" value={newRecipe.title} onChange={e => setNewRecipe({...newRecipe, title: e.target.value})} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }} />
-          
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
             <select value={newRecipe.type} onChange={e => setNewRecipe({...newRecipe, type: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px' }}>
               <option value="فطار">فطار</option>
               <option value="غداء">غداء</option>
@@ -81,26 +95,20 @@ export default function AdminDashboard() {
             </select>
           </div>
 
-          <input placeholder="مدة الطبخ (بالدقائق)" type="number" value={newRecipe.cookTime} onChange={e => setNewRecipe({...newRecipe, cookTime: e.target.value})} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }} />
+          <input placeholder="مدة الطبخ (بالدقائق)" type="number" value={newRecipe.cookTime} onChange={e => setNewRecipe({...newRecipe, cookTime: e.target.value})} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e0' }} />
 
-          {/* اختيار المكونات المطلوبة لهذه الوصفة */}
-          <div style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '8px' }}>
-            <p style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>المكونات المطلوبة لهذه الأكلة:</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          <div style={{ border: '1px solid #e2e8f0', padding: '10px', borderRadius: '8px' }}>
+            <p style={{ fontSize: '0.9rem', marginBottom: '8px', fontWeight: 'bold' }}>اختر المكونات:</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
               {allIngredients.map(ing => (
                 <button
                   key={ing._id}
                   type="button"
                   onClick={() => handleIngredientToggle(ing.name)}
                   style={{
-                    padding: '8px 12px',
-                    borderRadius: '20px',
-                    border: '1px solid #ddd',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    backgroundColor: selectedIngredients.includes(ing.name) ? '#3b82f6' : '#fff',
-                    color: selectedIngredients.includes(ing.name) ? '#fff' : '#333',
-                    transition: '0.2s'
+                    padding: '6px 10px', borderRadius: '15px', border: '1px solid #cbd5e0', fontSize: '0.8rem', cursor: 'pointer',
+                    backgroundColor: selectedIngredients.includes(ing.name) ? '#4299e1' : '#edf2f7',
+                    color: selectedIngredients.includes(ing.name) ? 'white' : '#4a5568'
                   }}
                 >
                   {ing.name}
@@ -109,29 +117,23 @@ export default function AdminDashboard() {
             </div>
           </div>
           
-          <textarea placeholder="طريقة التحضير (خطوة بخطوة)..." value={newRecipe.instructions} onChange={e => setNewRecipe({...newRecipe, instructions: e.target.value})} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd', minHeight: '120px' }} />
+          <textarea placeholder="طريقة التحضير..." value={newRecipe.instructions} onChange={e => setNewRecipe({...newRecipe, instructions: e.target.value})} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e0', minHeight: '100px' }} />
           
-          <button type="submit" style={{ backgroundColor: '#2563eb', color: 'white', padding: '15px', border: 'none', borderRadius: '10px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer' }}>حفظ الوصفة في الكتاب</button>
+          <button type="submit" style={{ backgroundColor: '#3182ce', color: 'white', padding: '12px', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '1.1rem' }}>حفظ الوصفة</button>
         </form>
       </div>
 
-      {/* قائمة الوصفات الحالية */}
-      <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-        <h3 style={{ borderBottom: '2px solid #ddd', paddingBottom: '10px' }}>وصفاتنا الحالية ({recipes.length})</h3>
-        <div style={{ display: 'grid', gap: '15px', marginTop: '15px' }}>
-          {recipes.map(recipe => (
-            <div key={recipe._id} style={{ backgroundColor: 'white', padding: '15px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-              <div>
-                <strong style={{ fontSize: '1.1rem' }}>{recipe.title}</strong> 
-                <span style={{ marginRight: '10px', color: '#64748b', fontSize: '0.9rem' }}>({recipe.type})</span>
-                <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '5px' }}>
-                  🕒 {recipe.cookTime} دقيقة | 📊 {recipe.difficulty} | 🥗 {recipe.ingredients?.length || 0} مكونات
-                </div>
-              </div>
-              <button onClick={() => deleteRecipe(recipe._id)} style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 'bold' }}>حذف</button>
+      <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+        <h3 style={{ marginBottom: '15px' }}>الوصفات المسجلة ({recipes.length})</h3>
+        {recipes.map(recipe => (
+          <div key={recipe._id} style={{ backgroundColor: 'white', padding: '12px', borderRadius: '10px', marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRight: '5px solid #3182ce' }}>
+            <div>
+              <strong>{recipe.title}</strong> <small>({recipe.type})</small>
+              <div style={{ fontSize: '0.75rem', color: '#718096' }}>🕒 {recipe.cookTime} دقيقة | {recipe.ingredients?.length || 0} مكونات</div>
             </div>
-          ))}
-        </div>
+            <button onClick={() => deleteRecipe(recipe._id)} style={{ color: '#e53e3e', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 'bold' }}>حذف</button>
+          </div>
+        ))}
       </div>
     </div>
   );
