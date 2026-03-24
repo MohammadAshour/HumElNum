@@ -11,4 +11,5 @@ const RecipeSchema = new mongoose.Schema({
   lastEaten: { type: Date, default: null }
 }, { timestamps: true });
 
+
 export default mongoose.models.Recipe || mongoose.model('Recipe', RecipeSchema);
