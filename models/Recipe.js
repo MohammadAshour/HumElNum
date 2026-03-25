@@ -6,7 +6,13 @@ const RecipeSchema = new mongoose.Schema({
   type: [{ type: String, enum: ['فطار', 'غداء', 'عشاء'] }], 
   cookTime: { type: Number, required: true },
   difficulty: { type: String, enum: ['سهل', 'وسط', 'صعب'], default: 'سهل' },
-  ingredients: [String],
+ingredients: [
+  {
+    name: { type: String, required: true },
+    value: { type: Number, default: 0 }, // الرقم: 1, 2, 500
+    unit: { type: String, default: 'واحدة' } // الوحدة: جرام، مل، كوب...
+  }
+],
   instructions: { type: String, required: true },
   lastEaten: { type: Date, default: null }
 }, { timestamps: true });
