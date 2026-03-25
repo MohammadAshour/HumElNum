@@ -13,7 +13,6 @@ export default function HomePage() {
     setLoading(true);
     setSelectedType(type);
     
-    // بناء الرابط مع الاستبعاد والأكشن المطلوب
     const actionParam = isMarkEaten ? `&action=markEaten` : '';
     const excludeParam = currentRecipe ? `&exclude=${currentRecipe._id}` : '';
     
@@ -26,7 +25,6 @@ export default function HomePage() {
           setCurrentRecipe(json.data);
           setShowDetails(false);
         } else {
-          // في حال عدم وجود بدائل في قاعدة البيانات لهذا النوع
           if (isMarkEaten) {
             alert(`تم التسجيل، ولكن لا توجد أكلات أخرى متاحة حالياً في قسم ${type}`);
             setCurrentRecipe(null);
@@ -42,6 +40,23 @@ export default function HomePage() {
     }
   };
 
+  // دالة إعادة تعيين كافة التواريخ
+  const resetAllEatenDates = async () => {
+    if (!confirm("هل تريد مسح تاريخ آخر أكلة لجميع الوجبات؟")) return;
+    
+    try {
+      const res = await fetch('/api/recipes/reset', { method: 'POST' });
+      const json = await res.json();
+      if (json.success) {
+        alert("تمت إعادة التعيين بنجاح");
+        setCurrentRecipe(null);
+        setSelectedType(null);
+      }
+    } catch (err) {
+      console.error("Reset Error:", err);
+    }
+  };
+
   return (
     <div dir="rtl" style={{ padding: '20px', fontFamily: 'Arial', backgroundColor: '#fff', minHeight: '100vh', color: '#1e293b' }}>
       
@@ -49,7 +64,7 @@ export default function HomePage() {
         <h1 style={{ fontSize: '2.5rem', fontWeight: '900', margin: '0' }}>هم النم 🍎</h1>
       </header>
 
-      {/* اختيار نوع الوجبة */}
+      {/* أزرار اختيار نوع الوجبة */}
       <section style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px' }}>
         {['فطار', 'غداء', 'عشاء'].map((t) => (
           <button key={t} onClick={() => pickRecipe(t)}
@@ -116,9 +131,26 @@ export default function HomePage() {
             <p style={{ fontSize: '1.2rem' }}>اختار نوع الوجبة للبدء</p>
           </div>
         )}
+
+        {/* زرار الريسيت */}
+        <button 
+          onClick={resetAllEatenDates}
+          style={{
+            marginTop: '40px',
+            padding: '8px 15px',
+            backgroundColor: '#fff',
+            color: '#cbd5e1',
+            border: '1px solid #f1f5f9',
+            borderRadius: '10px',
+            fontSize: '0.7rem',
+            cursor: 'pointer'
+          }}
+        >
+          إعادة تعيين ذاكرة الأكل 🔄
+        </button>
       </main>
 
-      <footer style={{ marginTop: '60px', borderTop: '1px solid #f1f5f9', paddingTop: '20px', display: 'flex', justifyContent: 'center', gap: '40px' }}>
+      <footer style={{ marginTop: '40px', borderTop: '1px solid #f1f5f9', paddingTop: '20px', display: 'flex', justifyContent: 'center', gap: '40px' }}>
         <Link href="/store" style={{ textDecoration: 'none', color: '#94a3b8', fontSize: '0.9rem', fontWeight: 'bold' }}>📦 المخزن</Link>
         <Link href="/chef" style={{ textDecoration: 'none', color: '#94a3b8', fontSize: '0.9rem', fontWeight: 'bold' }}>👨‍🍳 الشيف</Link>
       </footer>
