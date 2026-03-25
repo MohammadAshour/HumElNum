@@ -5,7 +5,7 @@ const RecipeSchema = new mongoose.Schema({
   // التعديل: مصفوفة نصوص للسماح بأكثر من نوع (فطار، غداء، عشاء)
   type: [{ type: String, enum: ['فطار', 'غداء', 'عشاء'] }], 
   cookTime: { type: Number, required: true },
-  difficulty: { type: String, enum: ['سهل', 'وسط', 'صعب'], default: 'سهل' },
+  difficulty: { type: String, enum: ['سهل', 'متوسط', 'صعب'], default: 'سهل' },
 ingredients: [
   {
     name: { type: String, required: true },
