@@ -1,43 +1,33 @@
 import dbConnect from '../../../lib/db';
 import Recipe from '../../../models/Recipe';
-import Ingredient from '../../../models/Ingredient';
 import { NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 
-export async function GET() {
+export async function GET(req) {
   await dbConnect();
   try {
-    // 1. هات أسماء المكونات المتاحة فقط (isAvailable: true)
-    const availableDocs = await Ingredient.find({ isAvailable: true }).select('name');
-    const availableNames = availableDocs.map(ing => ing.name.trim());
+    const { searchParams } = new URL(req.url);
+    const type = searchParams.get('type');
+    const excludeId = searchParams.get('exclude'); // ID الأكلة اللي عايزين نستبعدها
 
-    // 2. هات كل الوصفات
-    const allRecipes = await Recipe.find({}).lean();
+    if (!type) return NextResponse.json({ success: false, error: "اختار النوع" });
 
-    // 3. فلترة الوصفات
-    const possibleRecipes = allRecipes.filter(recipe => {
-      // التأكد إن فيه مصفوفة مكونات
-      if (!recipe.ingredients || !Array.isArray(recipe.ingredients) || recipe.ingredients.length === 0) {
-        return false;
-      }
+    // بناء فلتر الاستبعاد
+    let matchQuery = { type: type };
+    if (excludeId && mongoose.Types.ObjectId.isValid(excludeId)) {
+      matchQuery._id = { $ne: new mongoose.Types.ObjectId(excludeId) };
+    }
 
-      // المنطق: هل "كل" مكون في الوصفة موجود في قائمة "المتاح"؟
-      const hasAllIngredients = recipe.ingredients.every(ingName => 
-        availableNames.includes(ingName.trim())
-      );
+    const recipes = await Recipe.aggregate([
+      { $match: matchQuery },
+      { $sample: { size: 1 } }
+    ]);
 
-      // Debugging: اطبع في الـ Terminal عشان تشوف ليه الوصفة سقطت
-      if (!hasAllIngredients) {
-        console.log(`Recipe "${recipe.title}" is missing something.`);
-        console.log(`Needs: ${recipe.ingredients}`);
-        console.log(`Available: ${availableNames}`);
-      }
-
-      return hasAllIngredients;
+    return NextResponse.json({ 
+      success: true, 
+      data: recipes.length > 0 ? recipes[0] : null 
     });
-
-    return NextResponse.json({ success: true, data: possibleRecipes });
   } catch (error) {
-    console.error("Suggestion Error:", error);
     return NextResponse.json({ success: false, error: error.message });
   }
 }
