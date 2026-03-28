@@ -24,7 +24,6 @@ export default function ChefPage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  // إضافة مكون جديد للمخزن دون مغادرة الصفحة
   const handleQuickAddIng = async () => {
     if (!quickIngName.trim()) return;
     const res = await fetch('/api/ingredients', {
@@ -35,7 +34,7 @@ export default function ChefPage() {
     if ((await res.json()).success) {
       setQuickIngName('');
       setShowAddIng(false);
-      fetchData(); // تحديث القائمة
+      fetchData(); 
     }
   };
 
@@ -56,7 +55,7 @@ export default function ChefPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (selectedTypes.length === 0) return alert("اختار نوع الوجبة (فطار/غداء/عشاء)");
+    if (selectedTypes.length === 0) return alert("اختار نوع الوجبة (فطار/غداء/عشاء/سناكس)");
     if (selectedWithAmounts.length === 0) return alert("اختار المكونات أولاً");
     
     const res = await fetch('/api/recipes', {
@@ -87,7 +86,6 @@ export default function ChefPage() {
   return (
     <div dir="rtl" style={{ padding: '20px', backgroundColor: '#f8fafc', minHeight: '100vh', fontFamily: 'Arial' }}>
       
-      {/* هيدر التنقل */}
       <div style={{ display: 'flex', justifyContent: 'space-between', maxWidth: '700px', margin: '0 auto 20px auto' }}>
         <Link href="/" style={{ color: '#6366f1', textDecoration: 'none', fontWeight: 'bold' }}>🏠 الرئيسية</Link>
         <Link href="/store" style={{ color: '#10b981', textDecoration: 'none', fontWeight: 'bold' }}>📦 المخزن</Link>
@@ -99,7 +97,6 @@ export default function ChefPage() {
         
         <input placeholder="اسم الأكلة" value={newRecipe.title} onChange={e => setNewRecipe({...newRecipe, title: e.target.value})} required style={{ padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '1rem' }} />
         
-        {/* اختيار الصعوبة */}
         <div style={{ border: '1px solid #f1f5f9', padding: '10px', borderRadius: '15px' }}>
           <p style={{ margin: '0 0 10px 5px', fontSize: '0.85rem', fontWeight: 'bold', color: '#64748b' }}>مستوى الصعوبة:</p>
           <div style={{ display: 'flex', gap: '10px' }}>
@@ -113,11 +110,11 @@ export default function ChefPage() {
           </div>
         </div>
 
-        {/* نوع الوجبة */}
-        <div style={{ display: 'flex', gap: '10px' }}>
-          {['فطار', 'غداء', 'عشاء'].map(t => (
+        {/* نوع الوجبة - تم إضافة سناكس وتفعيل الـ Wrap */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {['فطار', 'غداء', 'عشاء', 'سناكس'].map(t => (
             <button key={t} type="button" onClick={() => setSelectedTypes(prev => prev.includes(t) ? prev.filter(i => i !== t) : [...prev, t])}
-              style={{ flex: 1, padding: '12px', borderRadius: '12px', cursor: 'pointer', border: '1px solid #e2e8f0',
+              style={{ flex: '1 1 80px', padding: '12px', borderRadius: '12px', cursor: 'pointer', border: '1px solid #e2e8f0',
                 backgroundColor: selectedTypes.includes(t) ? '#6366f1' : '#fff', color: selectedTypes.includes(t) ? '#fff' : '#64748b',
                 fontWeight: 'bold'
               }}>{t}</button>
@@ -126,7 +123,6 @@ export default function ChefPage() {
 
         <input placeholder="وقت الطبخ (دقائق)" type="number" value={newRecipe.cookTime} onChange={e => setNewRecipe({...newRecipe, cookTime: e.target.value})} required style={{ padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }} />
 
-        {/* المكونات والكميات */}
         <div style={{ border: '1px solid #f1f5f9', padding: '15px', borderRadius: '20px', backgroundColor: '#fcfcfc' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
             <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#1e293b' }}>المكونات المطلوبة:</span>
@@ -154,7 +150,6 @@ export default function ChefPage() {
             })}
           </div>
 
-          {/* تفاصيل الكمية للمكونات المختارة */}
           {selectedWithAmounts.map(item => (
             <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', backgroundColor: '#fff', padding: '12px', borderRadius: '15px', border: '1px solid #f1f5f9' }}>
               <span style={{ flex: 1, fontWeight: 'bold', fontSize: '0.9rem', color: '#334155' }}>{item.name}</span>
@@ -175,18 +170,20 @@ export default function ChefPage() {
         </button>
       </form>
 
-      {/* عرض الأكلات المسجلة */}
+      {/* عرض الأكلات المسجلة - تم إضافة سناكس */}
       <div style={{ maxWidth: '600px', margin: '50px auto' }}>
         <h2 style={{ textAlign: 'center', marginBottom: '25px', color: '#1e293b' }}>📖 قائمة الوصفات</h2>
-        {['فطار', 'غداء', 'عشاء'].map(cat => {
+        {['فطار', 'غداء', 'عشاء', 'سناكس'].map(cat => {
           const list = recipes.filter(r => r.type.includes(cat));
           if (list.length === 0) return null;
           return (
             <div key={cat} style={{ marginBottom: '35px' }}>
               <h3 style={{ padding: '8px 18px', borderRadius: '12px', display: 'inline-block', fontSize: '0.9rem', marginBottom: '15px',
-                backgroundColor: cat === 'فطار' ? '#fef3c7' : cat === 'غداء' ? '#fee2e2' : '#e0e7ff',
-                color: cat === 'فطار' ? '#92400e' : cat === 'غداء' ? '#991b1b' : '#3730a3'
-              }}>{cat === 'فطار' ? '🍳 فطار' : cat === 'غداء' ? '🍗 غداء' : '🥪 عشاء'}</h3>
+                backgroundColor: cat === 'فطار' ? '#fef3c7' : cat === 'غداء' ? '#fee2e2' : cat === 'عشاء' ? '#e0e7ff' : '#f0fdf4',
+                color: cat === 'فطار' ? '#92400e' : cat === 'غداء' ? '#991b1b' : cat === 'عشاء' ? '#3730a3' : '#166534'
+              }}>
+                {cat === 'فطار' ? '🍳 فطار' : cat === 'غداء' ? '🍗 غداء' : cat === 'عشاء' ? '🥪 عشاء' : '🍿 سناكس'}
+              </h3>
               <div style={{ display: 'grid', gap: '12px' }}>
                 {list.map(recipe => (
                   <div key={recipe._id} style={{ backgroundColor: '#fff', padding: '18px', borderRadius: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #f1f5f9' }}>
