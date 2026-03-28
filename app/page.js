@@ -65,21 +65,23 @@ export default function HomePage() {
       </header>
 
       {/* أزرار اختيار نوع الوجبة */}
-      <section style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px' }}>
-        {['فطار', 'غداء', 'عشاء'].map((t) => (
-          <button key={t} onClick={() => pickRecipe(t)}
-            style={{
-              flex: 1, maxWidth: '95px', padding: '15px 5px', borderRadius: '20px', border: '2px solid',
-              cursor: 'pointer', fontWeight: 'bold',
-              borderColor: selectedType === t ? '#6366f1' : '#f1f5f9',
-              backgroundColor: selectedType === t ? '#6366f1' : '#fff',
-              color: selectedType === t ? '#fff' : '#64748b',
-            }}>
-            {t === 'فطار' ? '🍳' : t === 'غداء' ? '🍗' : '🥪'} <br/> {t}
-          </button>
-        ))}
-      </section>
+<section style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px', flexWrap: 'wrap' }}>
+  {['فطار', 'غداء', 'عشاء', 'سناكس'].map((t) => (
+    <button key={t} onClick={() => pickRecipe(t)}
+      style={{
+        flex: '1 1 80px', // عشان لو الشاشة صغيرة ينزلوا سطر جديد
+        maxWidth: '95px', padding: '15px 5px', borderRadius: '20px', border: '2px solid',
+        cursor: 'pointer', fontWeight: 'bold',
+        borderColor: selectedType === t ? '#6366f1' : '#f1f5f9',
+        backgroundColor: selectedType === t ? '#6366f1' : '#fff',
+        color: selectedType === t ? '#fff' : '#64748b',
+      }}>
+      {t === 'فطار' ? '🍳' : t === 'غداء' ? '🍗' : t === 'عشاء' ? '🥪' : '🍿'} <br/> {t}
+    </button>
+  ))}
+</section>
 
+     
       <main style={{ maxWidth: '420px', margin: '0 auto', textAlign: 'center' }}>
         {loading ? (
           <p style={{ color: '#94a3b8' }}>جاري التحميل...</p>
